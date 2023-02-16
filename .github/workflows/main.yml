@@ -1,0 +1,39 @@
+name: go-microservices
+on: [push, workflow_dispatch]
+jobs:
+  deploy: 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      - name: Build the application
+        run: |
+          go mod download
+          go build -o app
+      - name: Build and Push Container Image
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+          dockerfile: Dockerfile
+          repository: ${{ secrets.REGISTRY_USER }}/${{ github.event.repository.name }}
+          tag_with_ref: true
+          tag_with_sha: true
+
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.7.2
+        with:
+          minikube version: 'v1.28.0'
+          kubernetes version: 'v1.25.4'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Interact with the cluster
+        run: kubectl get nodes
+
+      - name: deploy to cluster
+        run: |
+          kubectl apply -f kubernetes/
+          kubectl get all
