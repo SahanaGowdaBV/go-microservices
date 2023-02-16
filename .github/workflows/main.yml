@@ -32,7 +32,6 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
       - name: Interact with the cluster
         run: kubectl get nodes
-
       - name: deploy to cluster
         run: |
           kubectl apply -f kubernetes/
